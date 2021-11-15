@@ -54,10 +54,10 @@ RM = /snap/clion/169/bin/cmake/linux/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/manel/CLionProjects/dprot/dprot_pract2
+CMAKE_SOURCE_DIR = /home/manel/Dev/dprot/dprot_pract2
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/manel/CLionProjects/dprot/dprot_pract2/cmake-build-debug
+CMAKE_BINARY_DIR = /home/manel/Dev/dprot/dprot_pract2/cmake-build-debug
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -81,14 +81,14 @@ clean: CMakeFiles/dprot_pract2.dir/clean
 CMakeFiles/dprot_pract2.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dprot_pract2.dir/build.make CMakeFiles/dprot_pract2.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dprot_pract2.dir/build.make CMakeFiles/dprot_pract2.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/manel/CLionProjects/dprot/dprot_pract2/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target dprot_pract2"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/manel/Dev/dprot/dprot_pract2/cmake-build-debug/CMakeFiles --progress-num=1,2 "Built target dprot_pract2"
 .PHONY : CMakeFiles/dprot_pract2.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/dprot_pract2.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/manel/CLionProjects/dprot/dprot_pract2/cmake-build-debug/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/manel/Dev/dprot/dprot_pract2/cmake-build-debug/CMakeFiles 2
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/dprot_pract2.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/manel/CLionProjects/dprot/dprot_pract2/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/manel/Dev/dprot/dprot_pract2/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/dprot_pract2.dir/rule
 
 # Convenience name for target.

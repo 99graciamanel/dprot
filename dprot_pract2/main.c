@@ -97,8 +97,7 @@ int main() {
     MD5_Update(&context_prove, key_mess1_padding_mess2, key_mess1_padding_mess2_length);
     MD5_Final(prove, &context_prove);
 
-    printf("Prove of the previous tag, knowing message 1, the key and the required padding:\n"
-           "What about joining me tomorrow for dinner? -> In hexadecimal\n\t");
+    printf("Prove of the previous tag, knowing message 1, the key and the required padding:\n\t");
     for(int i = 0; i < MD5_DIGEST_LENGTH; ++i)
         printf("%02x", (unsigned int)prove[i]);
     printf("\n");

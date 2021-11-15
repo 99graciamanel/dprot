@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/manel/CLionProjects/dprot/dprot_pract2/main.c
+/home/manel/Dev/dprot/dprot_pract2/main.c
 stdio.h
 -
 string.h

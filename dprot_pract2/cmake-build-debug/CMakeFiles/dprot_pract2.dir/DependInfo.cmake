@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/manel/CLionProjects/dprot/dprot_pract2/main.c" "/home/manel/CLionProjects/dprot/dprot_pract2/cmake-build-debug/CMakeFiles/dprot_pract2.dir/main.c.o"
+  "/home/manel/Dev/dprot/dprot_pract2/main.c" "/home/manel/Dev/dprot/dprot_pract2/cmake-build-debug/CMakeFiles/dprot_pract2.dir/main.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 
