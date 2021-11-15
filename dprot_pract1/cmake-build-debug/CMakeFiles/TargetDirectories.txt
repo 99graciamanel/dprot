@@ -1,0 +1,3 @@
+/home/manel/CLionProjects/dprot/dprot_pract1/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/manel/CLionProjects/dprot/dprot_pract1/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/manel/CLionProjects/dprot/dprot_pract1/cmake-build-debug/CMakeFiles/dprot_pract1.dir

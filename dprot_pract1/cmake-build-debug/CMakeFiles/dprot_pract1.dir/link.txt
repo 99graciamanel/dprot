@@ -1,0 +1,1 @@
+/usr/bin/cc -g CMakeFiles/dprot_pract1.dir/main.c.o -o dprot_pract1  /usr/lib/x86_64-linux-gnu/libssl.so /usr/lib/x86_64-linux-gnu/libcrypto.so 
