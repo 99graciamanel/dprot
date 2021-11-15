@@ -46,9 +46,9 @@ int main() {
 
     int num_of_blocks = key_mess1_length / block_length + 1;
 
-    int mess2_length = 76;
+    int mess_extra_length = 76;
     // Oops, Sorry, I just remember that I have a meeting very soon in the morning. -> In hexadecimal
-    unsigned char mess2[] = {
+    unsigned char mess_extra[] = {
             0x4f,0x6f,0x70,0x73,0x2c,0x20,0x53,0x6f,
             0x72,0x72,0x79,0x2c,0x20,0x49,0x20,0x6a,
             0x75,0x73,0x74,0x20,0x72,0x65,0x6d,0x65,
@@ -62,13 +62,13 @@ int main() {
     };
 
     unsigned char forgery_tag[MD5_DIGEST_LENGTH] = {};
-    MD5_CTX context_forgery;
-    MD5_Init(&context_forgery);
-    set_ctx(&context_forgery, &mess1_tag, num_of_blocks);
-    MD5_Update(&context_forgery, mess2, mess2_length);
-    MD5_Final(forgery_tag, &context_forgery);
+    MD5_CTX forgery_tag_context;
+    MD5_Init(&forgery_tag_context);
+    set_ctx(&forgery_tag_context, &mess1_tag, num_of_blocks);
+    MD5_Update(&forgery_tag_context, mess_extra, mess_extra_length);
+    MD5_Final(forgery_tag, &forgery_tag_context);
 
-    printf("Tag of the forgery (k + mess1 + (padding) + mess2) without knowing message 1 nor they key:\n"
+    printf("Tag of the forgery (k + mess1 + (padding) + mess_extra) without knowing message 1 nor they key:\n"
            "What about joining me tomorrow for dinner? -> In hexadecimal\n\t");
     for(int i = 0; i < MD5_DIGEST_LENGTH; ++i)
         printf("%02x", (unsigned int)forgery_tag[i]);
@@ -89,13 +89,13 @@ int main() {
 
     int key_mess1_padding_length = key_mess1_length + padding_length;
     unsigned char *key_mess1_padding = join(key_mess1, key_mess1_length, padding, padding_length);
-    int key_mess1_padding_mess2_length = key_mess1_padding_length + mess2_length;
-    unsigned char *key_mess1_padding_mess2 = join(key_mess1_padding, key_mess1_padding_length, mess2, mess2_length);
+    int key_mess1_padding_mess_extra_length = key_mess1_padding_length + mess_extra_length;
+    unsigned char *key_mess1_padding_mess_extra = join(key_mess1_padding, key_mess1_padding_length, mess_extra, mess_extra_length);
 
     unsigned char prove[MD5_DIGEST_LENGTH] = {};
     MD5_CTX context_prove;
     MD5_Init(&context_prove);
-    MD5_Update(&context_prove, key_mess1_padding_mess2, key_mess1_padding_mess2_length);
+    MD5_Update(&context_prove, key_mess1_padding_mess_extra, key_mess1_padding_mess_extra_length);
     MD5_Final(prove, &context_prove);
 
     printf("Prove of the previous tag, knowing message 1, the key and the required padding:\n\t");
