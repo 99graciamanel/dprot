@@ -106,8 +106,8 @@ int main() {
     return 0;
 }
 
-unsigned char *join(unsigned char *s1, int size1,unsigned char *s2, int size2) {
-    unsigned char *result = malloc(size1 + size2 + 1);
+unsigned char *join(unsigned char *s1, int size1, unsigned char *s2, int size2) {
+    unsigned char *result = malloc(size1 + size2);
     memcpy(result, s1, size1);
     memcpy(result+size1, s2, size2);
     return result;
