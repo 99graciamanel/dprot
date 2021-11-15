@@ -9,7 +9,8 @@ unsigned int get_hex_word32(const char *str);
 void set_ctx(MD5_CTX *pctx, const char *digest, unsigned long nblocks);
 
 int main() {
-    unsigned char digest[MD5_DIGEST_LENGTH] = {};
+
+    unsigned char mess1_tag[MD5_DIGEST_LENGTH] = {};
 
     int key_length = 16;
     unsigned char key[] = {
@@ -32,15 +33,15 @@ int main() {
     int key_mess1_length = key_length + mess1_length;
     unsigned char *key_mess1 = join(key, key_length, mess1, mess1_length);
 
-    MD5_CTX context_digest;
-    MD5_Init(&context_digest);
-    MD5_Update(&context_digest, key_mess1, key_mess1_length);
-    MD5_Final(digest, &context_digest);
+    MD5_CTX mess1_tag_context;
+    MD5_Init(&mess1_tag_context);
+    MD5_Update(&mess1_tag_context, key_mess1, key_mess1_length);
+    MD5_Final(mess1_tag, &mess1_tag_context);
 
     printf("Tag of the first message (k + mess1):\n"
            "What about joining me tomorrow for dinner? -> In hexadecimal\n\t");
     for(int i = 0; i < MD5_DIGEST_LENGTH; ++i)
-        printf("%02x", (unsigned int)digest[i]);
+        printf("%02x", (unsigned int)mess1_tag[i]);
     printf("\n\n");
 
     int num_of_blocks = key_mess1_length / block_length + 1;
@@ -63,7 +64,7 @@ int main() {
     unsigned char forgery_tag[MD5_DIGEST_LENGTH] = {};
     MD5_CTX context_forgery;
     MD5_Init(&context_forgery);
-    set_ctx(&context_forgery, &digest, num_of_blocks);
+    set_ctx(&context_forgery, &mess1_tag, num_of_blocks);
     MD5_Update(&context_forgery, mess2, mess2_length);
     MD5_Final(forgery_tag, &context_forgery);
 
