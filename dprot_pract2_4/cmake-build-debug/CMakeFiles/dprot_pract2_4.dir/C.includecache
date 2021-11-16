@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/manel/CLionProjects/dprot/dprot_pract2_4/main.c
+stdio.h
+-
+string.h
+-
+openssl/md5.h
+-
+malloc.h
+-
+
