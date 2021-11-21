@@ -7,4 +7,10 @@
 #IncludeRegexTransform: 
 
 /home/manel/CLionProjects/dprot/dprot_pract2_5/main.c
+stdio.h
+-
+unistd.h
+-
+dirent.h
+-
 
