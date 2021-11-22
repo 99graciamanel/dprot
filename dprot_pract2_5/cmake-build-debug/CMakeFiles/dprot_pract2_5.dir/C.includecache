@@ -13,4 +13,10 @@ unistd.h
 -
 dirent.h
 -
+stdlib.h
+-
+string.h
+-
+math.h
+-
 
