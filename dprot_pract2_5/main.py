@@ -1,30 +1,37 @@
 import argparse
 import os
+
 import math
 import numpy as np
+from random import randint
+
+NAMES = ["We", "I", "They", "He", "She", "Jack", "Jim"]
+VERBS = ["was", "is", "are", "were"]
+NOUNS = ["playing a game", "watching television", "talking", "dancing", "speaking"]
 
 def parse_arguments():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--generate_random_docs', type=int, help="Number of nodes to be generated randomly", default=8)
-    parser.add_argument('--proof_node', type=int, help="Node to be proved", default=0)
+    parser.add_argument('--generate_random_docs', type=int, help="Number of nodes to be generated randomly", default=16)
+    parser.add_argument('--proof_node', type=int, help="Node to be proved", default=16)
     return parser.parse_args()
 
 def clean_directories():
-    # Remove past nodes
-    os.system("rm -rf nodes")
-    os.system("rm -rf proofs")
-
-    os.system("mkdir nodes/")
-    os.system("mkdir proofs/")
+    # Restart experiment folders
+    os.system("rm -f nodes/*")
+    os.system("rm -f proofs/*")
 
 def generate_random_docs(number_of_docs):
+    print("\nStart generating random docs----\n")
     for i in range(number_of_docs):
         generate_random_doc(i)
+    print("\n----Finished generating random docs\n")
 
 def generate_random_doc(doc_number):
-    new_doc = open("docs/doc" + str(doc_number) + ".dat", "w")
-    new_doc.write("This is the " + str(doc_number) + " random sentence")
+    random_sentence = "%s %s %s" % (NAMES[randint(0, len(NAMES)-1)], VERBS[randint(0, len(VERBS)-1)], NOUNS[randint(0, len(NOUNS)-1)])
+    new_doc = open("docs/doc%s.dat" % (doc_number), "w")
+    new_doc.write("%s" % (random_sentence))
     new_doc.close()
+    print("docs/doc%s.dat has been created randomly: %s" % (doc_number, random_sentence))
 
 def read_bytes_from_file(file_name):
     file = open(file_name, "rb")
@@ -38,36 +45,41 @@ def read_bytes_from_file(file_name):
 
 class MerkleTree:
     def __init__(self):
-        self.n = 0
-        self.layers = 0
-        self.nodes = np.zeros((0,0))
+        self.n_docs = 0
+        self.n_layers = 0
+        self.node_matrix = np.zeros((2 ** 7, 2 ** 7))
 
-    def build_tree(self, n):
-        # Create a leaf for each document
-        # i = 0
-        self.n = n
-        self.layers = int(math.ceil(math.log2(n))) + 1
-        self.nodes = np.zeros((2**7,2**7)) # not n --> need to check if node exists or not
+    def build_merkle_tree(self, n_docs):
+        self.n_docs = n_docs
+        self.n_layers = self.calculate_n_layers(self.n_docs)
 
-        for j in range(self.n):
-            self.nodes[0][j] = 1
-            os.system("cat prepends/doc.pre docs/doc"+str(j)+".dat | openssl dgst -sha1 -binary > nodes/node0."+str(j))
+        print("Started Building Merkle Tree----\n")
 
-        t = int(np.floor(self.n / 2))
+        # Generate initial nodes from random docs
+        for j in range(self.n_docs):
+            self.node_matrix[0][j] = 1
+            self.generate_doc_node(j, "nodes/node0.%s" % (j))
+            print("0:%s:%s" % (j, read_bytes_from_file("nodes/node0.%s" % (j))))
+        print()
+        t = self.calculate_next_layer(self.n_docs)
 
-        for i in range(1, self.layers):
+        for i in range(1, self.n_layers):
             for j in range(t):
-                self.nodes[i][j] = 1
-                if self.nodes[i-1][2*j+1]:
-                    # leaf exists
-                    os.system("cat prepends/node.pre nodes/node" + str(i-1) + "." + str(2*j) + " nodes/node" + str(i-1) + "." + str(2*j+1) + " | openssl dgst -sha1 -binary > nodes/node" + str(i) + "."+str(j))
-                else:
-                    # leaf does not exist
-                    os.system("cat prepends/node.pre nodes/node" + str(i-1) + "." + str(2*j) + " | openssl dgst -sha1 -binary > nodes/node" + str(i) + "."+str(j))
-                print(str(i) + ":" + str(j) + ":" + read_bytes_from_file("nodes/node" + str(i)+ "."+str(j)))
-            t = int(np.floor(t / 2))
+                self.node_matrix[i][j] = 1
+                if self.node_matrix[i-1][2*j+1]: # If node is not alone
+                    self.generate_node_from_two_nodes(
+                        "nodes/node%s.%s" % (i-1, 2*j), "nodes/node%s.%s" % (i-1, 2*j+1), "nodes/node%s.%s" % (i,j))
+                else:                            # If node is alone
+                    self.generate_node_from_one_node(
+                        "nodes/node%s.%s" % (i-1, 2*j), "nodes/node%s.%s" % (i,j))
+                print("%s:%s:%s" % (i, j, read_bytes_from_file("nodes/node%s.%s" % (i, j))))
+            print()
+            t = self.calculate_next_layer(t)
 
-    def write_summary(self):
+        print("----Finished Building Merkle Tree\n")
+
+    def formalize_results_document(self):
+        print("Started writing summary to results file----\n")
         results = open("results", "w")
 
         results.write("MerkleTree:sha1:")
@@ -75,102 +87,125 @@ class MerkleTree:
         doc_pre = read_bytes_from_file("prepends/doc.pre")
         node_pre = read_bytes_from_file("prepends/node.pre")
 
-        results.write(doc_pre + ":" + node_pre)
+        root_node = read_bytes_from_file("nodes/node%s.0" % (self.n_layers-1))
+        results.write("%s:%s:%s:%s:%s\n" % (doc_pre, node_pre, self.n_docs, self.n_layers, root_node))
 
-        results.write(":" + str(self.n) + ":" + str(self.layers) + ":")
+        t = self.calculate_next_layer(self.n_docs)
 
-        root_node = read_bytes_from_file("nodes/node"+str(self.layers-1)+".0")
-
-        results.write(root_node)
-        results.write("\n")
-
-        t = int(np.floor(self.n / 2))
-
-        for i in range(self.layers):
+        for i in range(self.n_layers):
             for j in range(t):
-                node = read_bytes_from_file("nodes/node" + str(i) + "." + str(j))
-                results.write(str(i) + ":" + str(j) + ":" + node + "\n")
-            t = int(np.floor(t / 2))
+                results.write("%s:%s:%s\n" % (i, j, read_bytes_from_file("nodes/node%s.%s" % (i, j))))
+            t = self.calculate_next_layer(t)
+
         results.close()
+        print("----Finished writing summary to results file\n")
 
-    def add_new_doc(self):
-        new_doc = open("docs/doc"+str(self.n)+".dat", "w")
-        new_doc.write("This is the " + str(self.n) + " random sentence")
-        new_doc.close()
-        self.nodes[0][self.n] = 1
-        os.system("cat prepends/doc.pre docs/doc"+str(self.n)+".dat | openssl dgst -sha1 -binary > nodes/node0."+str(self.n))
-        self.n += 1
-        self.layers = int(math.ceil(math.log2(self.n))) + 1
+    def add_new_doc_to_tree(self):
+        print("Started adding new doc to Merkle Tree----\n")
+        generate_random_doc(self.n_docs)
+        self.node_matrix[0][self.n_docs] = 1
+        self.generate_doc_node(self.n_docs, "nodes/node0.%s" % (self.n_docs))
+        print("0:%s:%s" % (self.n_docs, read_bytes_from_file("nodes/node0.%s" % (self.n_docs))))
 
-    def add_file(self):
-        j = int(np.floor((self.n-1)/2))
-        for i in range(1, self.layers):
-            self.nodes[i][j] = 1
-            if self.nodes[i-1][2*j+1]:
-                # leaf exists
-                os.system("cat prepends/node.pre nodes/node" + str(i-1) + "." + str(2*j) + " nodes/node" + str(i-1) + "." + str(2*j+1) + " | openssl dgst -sha1 -binary > nodes/node" + str(i) + "."+str(j))
-            else:
-                # leaf does not exist
-                os.system("cat prepends/node.pre nodes/node" + str(i-1) + "." + str(2*j) + " | openssl dgst -sha1 -binary > nodes/node" + str(i) + "."+str(j))
-            j = int(np.floor(j / 2))
+        self.n_docs += 1
+        self.n_layers = self.calculate_n_layers(self.n_docs)
+
+        self.recalculate_new_doc_nodes()
+        print("\n----Finished adding new doc to Merkle Tree\n")
+
+    def recalculate_new_doc_nodes(self):
+        t = self.calculate_next_layer(self.n_docs-1)
+        for i in range(1, self.n_layers):
+            self.node_matrix[i][t] = 1
+            if self.node_matrix[i-1][2*t+1]: # If node is not alone
+                self.generate_node_from_two_nodes(
+                    "nodes/node%s.%s" % (i-1, 2*t), "nodes/node%s.%s" % (i-1, 2*t+1), "nodes/node%s.%s" % (i, t))
+            else:                            # If node is alone
+                self.generate_node_from_one_node(
+                    "nodes/node%s.%s" % (i-1, 2*t), "nodes/node%s.%s" % (i, t))
+            print("%s:%s:%s" % (i, t, read_bytes_from_file("nodes/node%s.%s" % (i, t))))
+            t = self.calculate_next_layer(t)
 
     def produce_proof(self, id):
         proof = open("proofs/proof", "w")
 
-        if id >= self.n:
-            proof.write("Document does not belong to Merkle Tree.\n")
+        if id >= self.n_docs:
             proof.close()
             return False
 
-        j = id
-        for i in range(self.layers-1):
-            node = ""
-            if j%2 == 0:
-                if self.nodes[i][j+1]:
-                    proof.write("nodes/node"+str(i)+"."+str(j+1))
-                proof.write("\n")
+        t = id
+        # For each layer, decide which node is necessary for the proof (if an adjacent node exists)
+        for i in range(self.n_layers-1):
+            if t%2 == 0:
+                if self.node_matrix[i][t + 1]: # If adjacent node exists
+                    proof.write("nodes/node%s.%s" % (i, t+1))
             else:
-                if self.nodes[i][j-1]: # don't think this is necessary
-                    proof.write("nodes/node"+str(i)+"."+str(j-1))
-                proof.write("\n")
+                if self.node_matrix[i][t - 1]: # If adjacent node exists
+                    proof.write("nodes/node%s.%s" % (i, t-1))
+            proof.write("\n")
 
-            j = int(np.floor(j/2))
+            t = self.calculate_next_layer(t)
 
-        proof.write("nodes/node"+str(self.layers-1)+".0")
+        # Expected final proof
+        proof.write("nodes/node%s.0" % (self.n_layers - 1))
         proof.close()
         return True
 
     def check_proof(self, id):
+        print("Started checking proof----\n")
         if self.produce_proof(id) == False:
+            print("################### Document not found in Merkle Tree ###################")
+            print("\n----Finished checking proof")
             return
 
-        j = id
+        t = id
         i = 0
 
-        os.system("cat prepends/doc.pre docs/doc"+str(id)+".dat | openssl dgst -sha1 -binary > proofs/proof0")
-
+        self.generate_doc_node(id, "proofs/proof0")
         proof = open("proofs/proof", "r")
         lines = proof.read().splitlines()
-        for i in range(self.layers-1):
+        print("%s:%s:%s" % (i, t, read_bytes_from_file("proofs/proof%s" % (i))))
+
+        for i in range(self.n_layers - 1):
             proof_line = lines[i]
-
-            if j%2 == 0:
-                os.system("cat prepends/node.pre proofs/proof" + str(i) + " " + proof_line + " | openssl dgst -sha1 -binary > proofs/proof" + str(i+1))
+            # Depending on if it is pair or not, the order changes (proof may return an empty file)
+            if t%2 == 0:
+                self.generate_node_from_two_nodes(
+                    "proofs/proof%s" % (i), proof_line, "proofs/proof%s" % (i+1))
             else:
-                os.system("cat prepends/node.pre " + proof_line + " proofs/proof" + str(i) + " | openssl dgst -sha1 -binary > proofs/proof" + str(i+1))
-            print(str(i) + ":" + str(j) + ":" + read_bytes_from_file("proofs/proof" + str(i)))
-            j = int(np.floor(j/2))
+                self.generate_node_from_two_nodes(
+                    proof_line, "proofs/proof%s" % (i), "proofs/proof%s" % (i+1))
 
-        node_root = read_bytes_from_file(lines[self.layers-1])
+            t = self.calculate_next_layer(t)
+            print("%s:%s:%s" % (i+1, t, read_bytes_from_file("proofs/proof%s" % (i+1))))
+
         proof.close()
-        result = read_bytes_from_file("proofs/proof" + str(i+1))
+
+        node_root = read_bytes_from_file(lines[self.n_layers - 1])
+        print("\n\tExpected: \t%s" % (node_root))
+        result = read_bytes_from_file("proofs/proof%s" % (i+1))
+        print("\tResult: \t%s" % (result))
 
         if result == node_root:
-            print("CORRECT!")
+            print("\nProof Check CORRECTLY")
         else:
-            print("INCORRECT!")
+            print("\nProof Check INCORRECTLY")
+        print("\n----Finished checking proof")
 
-        return
+    def calculate_n_layers(self, n_docs):
+        return int(math.ceil(math.log2(n_docs))) + 1
+
+    def calculate_next_layer(self, t):
+        return int(np.floor(t/2))
+
+    def generate_doc_node(self, doc_id, dest_file):
+        os.system("cat prepends/doc.pre docs/doc%s.dat | openssl dgst -sha1 -binary > %s" % (doc_id, dest_file))
+
+    def generate_node_from_two_nodes(self, first_node, second_node, dest_node):
+        os.system("cat prepends/node.pre %s %s | openssl dgst -sha1 -binary > %s" % (first_node, second_node, dest_node))
+
+    def generate_node_from_one_node(self, node, dest_node):
+        os.system("cat prepends/node.pre %s | openssl dgst -sha1 -binary > %s" % (node, dest_node))
 
 if __name__ == "__main__":
     args = parse_arguments()
@@ -182,9 +217,9 @@ if __name__ == "__main__":
     generate_random_docs(num_of_docs)
     tree = MerkleTree()
 
-    tree.build_tree(num_of_docs)
-    tree.write_summary()
-    tree.add_new_doc()
-    tree.add_file()
-    tree.write_summary()
+    tree.build_merkle_tree(num_of_docs)
+    tree.formalize_results_document()
+
+    tree.add_new_doc_to_tree()
+    tree.formalize_results_document()
     tree.check_proof(node_to_be_proved)
